@@ -1,5 +1,4 @@
-using Microsoft.AspNetCore.Hosting.Server;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
@@ -10,6 +9,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 var app = builder.Build();
 
+// Helper method to parse the records in the CSV file
 static string[] ParseCsvLine(string line)
 {
     var fields = new List<string>();
@@ -36,6 +36,7 @@ static string[] ParseCsvLine(string line)
     fields.Add(currentField); // Add the last field
     return fields.ToArray();
 }
+// Helper method to read the CSV file and load the records into memory. This will be our 'database'.
 static List<CompanyRecord> LoadCsv(string filePath)
 {
     var records = new List<CompanyRecord>();
@@ -67,53 +68,108 @@ static List<CompanyRecord> LoadCsv(string filePath)
     return records;
 }
 
+// In-memory database for the company data
 List<CompanyRecord> _companyData = new List<CompanyRecord>();
 
+// Load the in-memory database, if it hasn't been loaded already.
 void LoadCompanyData(List<CompanyRecord> companyData)
 {
-    if (companyData.Count == 0)
+    // Lock this peice of code to ensure single-threaded access.
+
+    lock (app)
     {
-        var filePath = "company_data.csv";
-        _companyData = LoadCsv(Path.Combine(app.Environment.ContentRootPath ,  filePath));
+        if (companyData.Count == 0)
+        {
+            var filePath = "company_data.csv";
+            _companyData = LoadCsv(Path.Combine(app.Environment.ContentRootPath, filePath));
+        }
     }
 }
 
+// REST API to query the in-memory database
 var companyDataApi = app.MapGroup("/company_data");
 
+// GET method to find a company
 companyDataApi.MapGet("/find/{company_text}", (string company_text) => {
     LoadCompanyData(_companyData);
     var company = _companyData.FirstOrDefault(c => (!string.IsNullOrEmpty(c.Ticker) && c.Ticker.ToUpper() == company_text.ToUpper()) || (!string.IsNullOrEmpty(c.Name) && c.Name.ToUpper().Contains(company_text.ToUpper())));
-    if (company is { }) 
-        return Results.Ok<int>(company.Id); 
-    else 
-        return Results.NotFound();
+    if (company is { })
+    {
+        return Results.Ok<int>(company.Id);
+    }
+    return Results.NotFound();
 });
 
-companyDataApi.MapGet("/{id}", (int id) => {
+// GET method to get the details of a company based on ID
+companyDataApi.MapGet("/{id}", (int id) =>
+{
     LoadCompanyData(_companyData);
     if (_companyData.FirstOrDefault(a => a.Id == id) is { } companyRecord)
+    {
         return Results.Ok(companyRecord);
-    else
-        return Results.NotFound();
+    }
+    return Results.NotFound();
 });
 
 app.Run();
 
 public record CompanyRecord
 {
+    /// <summary>
+    /// Unique ID of this record
+    /// </summary>
     public int Id { get; set; }
+    /// <summary>
+    /// The Rank of the company in the Fortune 500 list
+    /// </summary>
     public int Rank { get; set; }
+    /// <summary>
+    /// Name of the company
+    /// </summary>
     public string ?Name { get; set; }
+    /// <summary>
+    /// The industry of the copany
+    /// </summary>
     public string ?Industry { get; set; }
+    /// <summary>
+    /// City where the HQ is located.
+    /// </summary>
     public string ?City { get; set; }
+    /// <summary>
+    /// State where the HQ is located
+    /// </summary>
     public string ?State { get; set; }
+    /// <summary>
+    /// ZIP code of the HQ
+    /// </summary>
     public string ?Zip { get; set; }
+    /// <summary>
+    /// Website URL
+    /// </summary>
     public string ?Website { get; set; }
+    /// <summary>
+    /// Number of employees
+    /// </summary>
     public int Employees { get; set; }
+    /// <summary>
+    /// Revenue in millions of US$
+    /// </summary>
     public decimal RevenueInMillions { get; set; }
+    /// <summary>
+    /// Profit in millions of US$
+    /// </summary>
     public decimal ProfitInMillions { get; set; }
+    /// <summary>
+    ///  Valuation in millions of US$
+    /// </summary>
     public decimal ValuationInMillions { get; set; }
+    /// <summary>
+    ///    Stock ticker symbol
+    /// </summary>
     public string ?Ticker { get; set; }
+    /// <summary>
+    /// Name of the CEO
+    /// </summary>
     public string ?CEO { get; set; }
 }
 
