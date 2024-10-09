@@ -1,0 +1,11 @@
+@CompanyDataService_HostAddress = http://localhost:5232
+
+GET {{CompanyDataService_HostAddress}}/company_data/find/Costco
+Accept: application/json
+
+###
+
+GET {{CompanyDataService_HostAddress}}/company_data/11
+Accept: application/json
+
+###
