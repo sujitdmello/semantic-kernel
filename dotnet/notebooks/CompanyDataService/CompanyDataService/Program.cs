@@ -74,7 +74,7 @@ List<CompanyRecord> _companyData = new List<CompanyRecord>();
 // Load the in-memory database, if it hasn't been loaded already.
 void LoadCompanyData(List<CompanyRecord> companyData)
 {
-    // Lock this peice of code to ensure single-threaded access.
+    // Lock this piece of code to ensure single-threaded access.
 
     lock (app)
     {
@@ -90,7 +90,8 @@ void LoadCompanyData(List<CompanyRecord> companyData)
 var companyDataApi = app.MapGroup("/company_data");
 
 // GET method to find a company
-companyDataApi.MapGet("/find/{company_text}", (string company_text) => {
+companyDataApi.MapGet("/find/{company_text}", (string company_text) =>
+{
     LoadCompanyData(_companyData);
     var company = _companyData.FirstOrDefault(c => (!string.IsNullOrEmpty(c.Ticker) && c.Ticker.ToUpper() == company_text.ToUpper()) || (!string.IsNullOrEmpty(c.Name) && c.Name.ToUpper().Contains(company_text.ToUpper())));
     if (company is { })
@@ -126,27 +127,27 @@ public record CompanyRecord
     /// <summary>
     /// Name of the company
     /// </summary>
-    public string ?Name { get; set; }
+    public string? Name { get; set; }
     /// <summary>
     /// The industry of the copany
     /// </summary>
-    public string ?Industry { get; set; }
+    public string? Industry { get; set; }
     /// <summary>
     /// City where the HQ is located.
     /// </summary>
-    public string ?City { get; set; }
+    public string? City { get; set; }
     /// <summary>
     /// State where the HQ is located
     /// </summary>
-    public string ?State { get; set; }
+    public string? State { get; set; }
     /// <summary>
     /// ZIP code of the HQ
     /// </summary>
-    public string ?Zip { get; set; }
+    public string? Zip { get; set; }
     /// <summary>
     /// Website URL
     /// </summary>
-    public string ?Website { get; set; }
+    public string? Website { get; set; }
     /// <summary>
     /// Number of employees
     /// </summary>
@@ -166,11 +167,11 @@ public record CompanyRecord
     /// <summary>
     ///    Stock ticker symbol
     /// </summary>
-    public string ?Ticker { get; set; }
+    public string? Ticker { get; set; }
     /// <summary>
     /// Name of the CEO
     /// </summary>
-    public string ?CEO { get; set; }
+    public string? CEO { get; set; }
 }
 
 [JsonSerializable(typeof(CompanyRecord[]))]
